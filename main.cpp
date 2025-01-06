@@ -167,7 +167,7 @@ void loop() {
     delay(200);
 
 
-    turnRight();
+    turnRight();//cho xe xoay sang phai
     delay(500);
     Stop();
     delay(200);
@@ -177,16 +177,15 @@ void loop() {
     Serial.println("rotate90");
     delay(500);
     
-    if (radar_distance<=20){
+    while(radar_distance <= 20){
     forward();
     Serial.println("forward");
-    delay(500); 
-    Stop();
-    Serial.println("stop");
     delay(200);
     }
 
-    else {
+    Stop();
+    delay(500);
+
     forward();//////////////////////////cho xe robot xoay phải 1 đoạn
     Serial.println("turnright");
     delay(370);
@@ -204,8 +203,6 @@ void loop() {
       Serial.println("in the first while");
 
     }
-    }
-
   }
 }
 
