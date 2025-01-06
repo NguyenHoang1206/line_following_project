@@ -1,22 +1,10 @@
+#include <ServoC.h>
 #include <Arduino.h>
-#include <SparkFun_TB6612.h>
-#include <Servo.h>
 
-#define SWITCH_PIN 2
-
-
-
-// Variables for the radar_duration and the radar_distance
-long radar_duration;
-int radar_distance;
-Servo myServo; // Creates a servo object for controlling the servo motor
-
-
-/* XE DO LINE */
-int stop_distance = 12;// Khoảng cách phát hiện vật cản
+int stop_radar_distance = 12;// Khoảng cách phát hiện vật cản
 //Kết nối SRF 05 OR 04
-const int trigPin = 0; // kết nối chân trig với chân 11 arduino
-const int echoPin = 1; // kết nối chân echo với chân 12 arduino
+const int trigPin = 11; // kết nối chân trig với chân 11 arduino
+const int echoPin = 12; // kết nối chân echo với chân 12 arduino
 
 //L298 kết nối arduino
 const int motorA1      = 3;  // kết nối chân IN1 với chân 3 arduino
@@ -31,52 +19,38 @@ const int L_S = 9; // cb dò line phải
 const int S_S = 2; // cb dò line giữa
 const int R_S = 10; //cb dò line trái
 
+// ket noi chan pwm
+const int pwm = 3;// ket noi chan pwm cua servo voi chan D3 cua arduino
+
 int left_sensor_state;// biến lưu cảm biến hồng ngoại line trái
 int s_sensor_state;   // biến lưu cảm biến hồng ngoại line giữa
 int right_sensor_state;// biến lưu cảm biến hồng ngoại line phải
 
-long duration; //
-int distance;  // biến khoảng cách
+long radar_duration; //
+int radar_distance;  // biến khoảng cách
+
+ServoC myservo; // bien dieu khien servo
 
 
-// Function for calculating the radar_distance measured by the Ultrasonic sensor
-int calculateradar_distance(){ 
-  
-  digitalWrite(trigPin, LOW); 
-  delayMicroseconds(2);
-  // Sets the trigPin on HIGH state for 10 micro seconds
-  digitalWrite(trigPin, HIGH); 
-  delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
-  radar_duration = pulseIn(echoPin, HIGH); // Reads the echoPin, returns the sound wave travel time in microseconds
-  radar_distance= radar_duration*0.034/2;
-  return radar_distance;
+void setup() {
+  pinMode(L_S, INPUT); // chân cảm biến khai báo là đầu vào
+  pinMode(R_S, INPUT);
+  pinMode(S_S, INPUT);
+  pinMode(motorA1, OUTPUT); // chan motor khai bao la dau ra
+  pinMode(motorA2, OUTPUT);
+  pinMode(motorB1, OUTPUT);
+  pinMode(motorB2, OUTPUT);
+  pinMode(motorAspeed, OUTPUT);
+  pinMode(motorBspeed, OUTPUT);
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+
+  Serial.begin(9600);
+  analogWrite(motorAspeed, 120); // tốc độ động cơ a ban đầu 120 ( 0 - 255)
+  analogWrite(motorBspeed, 120 );// tốc độ động cơ b ban đầu 120 ( 0 - 255)
+  delay(2000);
+
 }
-
-void radar_control(){
-  // rotates the servo motor from 15 to 165 degrees
-  for(int i=15;i<=165;i++){  
-  myServo.write(i);
-  delay(30);
-  radar_distance = calculateradar_distance();// Calls a function for calculating the radar_distance measured by the Ultrasonic sensor for each degree
-  
-  Serial.print(i); // Sends the current degree into the Serial Port
-  Serial.print(","); // Sends addition character right next to the previous value needed later in the Processing IDE for indexing
-  Serial.print(radar_distance); // Sends the radar_distance value into the Serial Port
-  Serial.print("."); // Sends addition character right next to the previous value needed later in the Processing IDE for indexing
-  }
-  // Repeats the previous lines from 165 to 15 degrees
-  for(int i=165;i>15;i--){  
-  myServo.write(i);
-  delay(30);
-  radar_distance = calculateradar_distance();
-  Serial.print(i);
-  Serial.print(",");
-  Serial.print(radar_distance);
-  Serial.print(".");
-  }
-}
-
 
 void forward() { // chương trình con xe robot đi tiến
 
@@ -84,6 +58,7 @@ void forward() { // chương trình con xe robot đi tiến
   digitalWrite(motorA2, HIGH);
   digitalWrite (motorB1, HIGH);
   digitalWrite(motorB2, LOW);
+  Serial.println("forward");
 }
 
 
@@ -93,6 +68,7 @@ void turnRight() {
   digitalWrite(motorA2, LOW);
   digitalWrite (motorB1, HIGH);
   digitalWrite(motorB2, LOW);
+  Serial.println("turnright");
 }
 
 void turnLeft() {
@@ -101,6 +77,7 @@ void turnLeft() {
   digitalWrite(motorA2, HIGH);
   digitalWrite (motorB1, LOW);
   digitalWrite(motorB2, LOW);
+  Serial.println("turnleft");
 }
 
 void Stop() {
@@ -109,20 +86,20 @@ void Stop() {
   digitalWrite(motorA2, LOW);
   digitalWrite (motorB1, LOW);
   digitalWrite(motorB2, LOW);
+  Serial.println("stop");
 }
 
-
-void car_control(){
+void loop() {
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
-  duration = pulseIn(echoPin, HIGH);
-  distance = duration * 0.034 / 2;
+  radar_duration = pulseIn(echoPin, HIGH);
+  radar_distance = radar_duration * 0.034 / 2;
   delay(50);
-  Serial.print("Distance: ");
-  Serial.println(distance);
+  Serial.print("radar_distance: ");
+  Serial.println(radar_distance);
 
   left_sensor_state = digitalRead(L_S);
   s_sensor_state = digitalRead(S_S);
@@ -130,64 +107,73 @@ void car_control(){
 
   if ((digitalRead(L_S) == 0) && (digitalRead(S_S) == 1) && (digitalRead(R_S) == 0)) {
     forward(); // đi tiến
+    Serial.println("forward");
   }
 
   else if ((digitalRead(L_S) == 1) && (digitalRead(S_S) == 1) && (digitalRead(R_S) == 0)) {
     turnLeft(); // rẻ trái
+    Serial.println("turnleft");
   }
   else if ((digitalRead(L_S) == 1) && (digitalRead(S_S) == 0) && (digitalRead(R_S) == 0)) {
     turnLeft(); // rẻ trái
+    Serial.println("turnleft");
   }
 
   else if ((digitalRead(L_S) == 0) && (digitalRead(S_S) == 1) && (digitalRead(R_S) == 1)) {
     turnRight(); // rẻ phải
+    Serial.println("turnright");
   }
   else if ((digitalRead(L_S) == 0) && (digitalRead(S_S) == 0) && (digitalRead(R_S) == 1)) {
     turnRight(); // rẻ phải
+    Serial.println("turnright");
   }
 
   else if ((digitalRead(L_S) == 1) && (digitalRead(S_S) == 1) && (digitalRead(R_S) == 1)) {
     Stop(); // stop
+    Serial.println("stop");
   }
 
 
 
-  if (distance < stop_distance) // nếu khoảng cách nhỏ hơn giới hạn
+  if (radar_distance < stop_radar_distance) // nếu khoảng cách nhỏ hơn giới hạn
   {
 
     digitalWrite (motorA1, HIGH); // cho xe robot chạy lùi 1 đoạn
     digitalWrite(motorA2, LOW);
     digitalWrite (motorB1, LOW);
     digitalWrite(motorB2, HIGH);
+    Serial.println("backward");
     delay(300);
 
     digitalWrite (motorA1, LOW);
     digitalWrite(motorA2, LOW);
     digitalWrite (motorB1, LOW);
     digitalWrite(motorB2, LOW);
+    Serial.println("stop");
     delay(200);
 
 
-    digitalWrite (motorA1, HIGH); // cho xe robot xoay sang trái
-    digitalWrite(motorA2, LOW);
-    digitalWrite (motorB1, HIGH);
-    digitalWrite(motorB2, LOW);
+    turnLeft(); // cho xe robot xoay sang trái
+    Serial.println("turnleft");
     delay(280);
     digitalWrite (motorA1, LOW);
     digitalWrite(motorA2, LOW);
     digitalWrite (motorB1, LOW);
     digitalWrite(motorB2, LOW);
+    Serial.println("stop");
     delay(200);
 
     digitalWrite (motorA1, LOW); //cho xe robot đi thẳng 1 đoạn
     digitalWrite(motorA2, HIGH);
     digitalWrite (motorB1, HIGH);
     digitalWrite(motorB2, LOW);
+    Serial.println("forward");
     delay(550);
     digitalWrite (motorA1, LOW);
     digitalWrite(motorA2, LOW);
     digitalWrite (motorB1, LOW);
     digitalWrite(motorB2, LOW);
+    Serial.println("stop");
     delay(200);
 
 
@@ -195,42 +181,39 @@ void car_control(){
     digitalWrite(motorA2, HIGH);
     digitalWrite (motorB1, LOW);
     digitalWrite(motorB2, LOW);
+    Serial.println("turntight");
     delay(500);
     digitalWrite (motorA1, LOW);
     digitalWrite(motorA2, LOW);
     digitalWrite (motorB1, LOW);
     digitalWrite(motorB2, LOW);
+    Serial.println("stop");
     delay(200);
 
-    ///////////////////
-    digitalWrite (motorA1, LOW); //cho xe robot đi thẳng 1 đoạn
-    digitalWrite(motorA2, HIGH);
-    digitalWrite (motorB1, HIGH);
-    digitalWrite(motorB2, LOW);
+
+    myservo.write(90);
+    Serial.println("rotate90");
+    delay(500);
+    
+    if (radar_distance<=20){
+    forward();
+    Serial.println("forward");
     delay(500); 
-    digitalWrite (motorA1, LOW);
-    digitalWrite(motorA2, LOW);
-    digitalWrite (motorB1, LOW);
-    digitalWrite(motorB2, LOW);
+    Stop();
+    Serial.println("stop");
     delay(200);
+    }
 
-    ////////////////////////
-    digitalWrite (motorA1, LOW); //cho xe robot xoay phải 1 đoạn
-    digitalWrite(motorA2, HIGH);
-    digitalWrite (motorB1, LOW);
-    digitalWrite(motorB2, LOW);
+    else {
+    forward();//////////////////////////cho xe robot xoay phải 1 đoạn
+    Serial.println("turnright");
     delay(370);
-    digitalWrite (motorA1, LOW);
-    digitalWrite(motorA2, LOW);
-    digitalWrite (motorB1, LOW);
-    digitalWrite(motorB2, LOW);
+    Stop();
+    Serial.println("stop");
     delay(200);
-
-    digitalWrite (motorA1, LOW); //cho xe robot đi thẳng 1
-    digitalWrite(motorA2, HIGH);
-    digitalWrite (motorB1, HIGH);
-    digitalWrite(motorB2, LOW);
-
+    
+    forward(); //cho xe robot đi thẳng 1 doan
+    Serial.println("forward");
     while (left_sensor_state == LOW) {
 
       left_sensor_state = digitalRead(L_S);
@@ -239,38 +222,8 @@ void car_control(){
       Serial.println("in the first while");
 
     }
+    }
 
   }
 }
 
-void setup(){
-  pinMode(SWITCH_PIN, INPUT_PULLUP);
-
-  pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
-  pinMode(echoPin, INPUT); // Sets the echoPin as an Input
-  Serial.begin(9600);
-  myServo.attach(12); // Defines on which pin is the servo motor attached
-
-  pinMode(L_S, INPUT); // chân cảm biến khai báo là đầu vào
-  pinMode(R_S, INPUT);
-  pinMode(S_S, INPUT);
-  pinMode(motorA1, OUTPUT);
-  pinMode(motorA2, OUTPUT);
-  pinMode(motorB1, OUTPUT);
-  pinMode(motorB2, OUTPUT);
-  pinMode(motorAspeed, OUTPUT);
-  pinMode(motorBspeed, OUTPUT);
-  pinMode(trigPin, OUTPUT);
-  pinMode(echoPin, INPUT);
-}
-
-void loop(){
-  if(digitalRead(SWITCH_PIN) == LOW){
-    Serial.println("Device on");
-    radar_control();
-    car_control();
-  }
-  else{
-    // do nothing
-  }
-}
