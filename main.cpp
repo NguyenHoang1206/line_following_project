@@ -3,24 +3,25 @@
 
 int stop_radar_distance = 12;// Khoảng cách phát hiện vật cản
 //Kết nối SRF 05 OR 04
-const int trigPin = 11; // kết nối chân trig với chân 11 arduino
-const int echoPin = 12; // kết nối chân echo với chân 12 arduino
+const int trigPin = A1; // kết nối chân trig với chân 11 arduino
+const int echoPin = A0; // kết nối chân echo với chân 12 arduino
 
 //L298 kết nối arduino
-const int motorA1      = 3;  // kết nối chân IN1 với chân 3 arduino
-const int motorA2      = 4;  // kết nối chân IN2 với chân 4 arduino
-const int motorAspeed  = 5;  // kết nối chân ENA với chân 5 arduino
+const int motorA1      = 10;  // kết nối chân IN1 với chân 3 arduino
+const int motorA2      = 8;  // kết nối chân IN2 với chân 4 arduino
+const int motorAspeed  = 9;  // kết nối chân ENA với chân 5 arduino
 const int motorB1      = 7; // kết nối chân IN3 với chân 7 arduino
-const int motorB2      = 8; // kết nối chân IN4 với chân 8 arduino
-const int motorBspeed  = 6;  // kết nối chân ENB với chân 6 arduino
+const int motorB2      = 6; // kết nối chân IN4 với chân 8 arduino
+const int motorBspeed  = 5;  // kết nối chân ENB với chân 6 arduino
+//dong co A dieu khien banh xe trai, dong co B dieu khien banh xe phai
 
 //kết nối của 3 cảm biến hồng ngoại (dò line )
-const int L_S = 9; // cb dò line phải
-const int S_S = 2; // cb dò line giữa
-const int R_S = 10; //cb dò line trái
+const int L_S = 13; // cb dò line phải
+const int S_S = 12; // cb dò line giữa
+const int R_S = 11; //cb dò line trái
 
 // ket noi chan pwm
-const int pwm = 3;// ket noi chan pwm cua servo voi chan D3 cua arduino
+const int servopwm = 3;// ket noi chan pwm cua servo voi chan D3 cua arduino
 
 int left_sensor_state;// biến lưu cảm biến hồng ngoại line trái
 int s_sensor_state;   // biến lưu cảm biến hồng ngoại line giữa
@@ -59,6 +60,14 @@ void forward() { // chương trình con xe robot đi tiến
   digitalWrite (motorB1, HIGH);
   digitalWrite(motorB2, LOW);
   Serial.println("forward");
+}
+
+void backward() {
+  digitalWrite (motorA1, HIGH); // cho xe robot chạy lùi 1 đoạn
+  digitalWrite(motorA2, LOW);
+  digitalWrite (motorB1, LOW);
+  digitalWrite(motorB2, HIGH);
+  Serial.println("backward");
 }
 
 
@@ -138,56 +147,29 @@ void loop() {
   if (radar_distance < stop_radar_distance) // nếu khoảng cách nhỏ hơn giới hạn
   {
 
-    digitalWrite (motorA1, HIGH); // cho xe robot chạy lùi 1 đoạn
-    digitalWrite(motorA2, LOW);
-    digitalWrite (motorB1, LOW);
-    digitalWrite(motorB2, HIGH);
-    Serial.println("backward");
+    backward();
     delay(300);
 
-    digitalWrite (motorA1, LOW);
-    digitalWrite(motorA2, LOW);
-    digitalWrite (motorB1, LOW);
-    digitalWrite(motorB2, LOW);
-    Serial.println("stop");
+    Stop();
     delay(200);
 
 
     turnLeft(); // cho xe robot xoay sang trái
     Serial.println("turnleft");
     delay(280);
-    digitalWrite (motorA1, LOW);
-    digitalWrite(motorA2, LOW);
-    digitalWrite (motorB1, LOW);
-    digitalWrite(motorB2, LOW);
-    Serial.println("stop");
+    Stop();
     delay(200);
 
-    digitalWrite (motorA1, LOW); //cho xe robot đi thẳng 1 đoạn
-    digitalWrite(motorA2, HIGH);
-    digitalWrite (motorB1, HIGH);
-    digitalWrite(motorB2, LOW);
-    Serial.println("forward");
+
+    forward();
     delay(550);
-    digitalWrite (motorA1, LOW);
-    digitalWrite(motorA2, LOW);
-    digitalWrite (motorB1, LOW);
-    digitalWrite(motorB2, LOW);
-    Serial.println("stop");
+    Stop();
     delay(200);
 
 
-    digitalWrite (motorA1, LOW); // cho xe robot xoay phải 1 đoạn
-    digitalWrite(motorA2, HIGH);
-    digitalWrite (motorB1, LOW);
-    digitalWrite(motorB2, LOW);
-    Serial.println("turntight");
+    turnRight();
     delay(500);
-    digitalWrite (motorA1, LOW);
-    digitalWrite(motorA2, LOW);
-    digitalWrite (motorB1, LOW);
-    digitalWrite(motorB2, LOW);
-    Serial.println("stop");
+    Stop();
     delay(200);
 
 
