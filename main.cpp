@@ -123,6 +123,7 @@ void loop() {
     turnLeft(); // rẻ trái
     Serial.println("turnleft");
   }
+    
   else if ((digitalRead(L_S) == 1) && (digitalRead(S_S) == 0) && (digitalRead(R_S) == 0)) {
     turnLeft(); // rẻ trái
     Serial.println("turnleft");
@@ -132,16 +133,20 @@ void loop() {
     turnRight(); // rẻ phải
     Serial.println("turnright");
   }
+    
   else if ((digitalRead(L_S) == 0) && (digitalRead(S_S) == 0) && (digitalRead(R_S) == 1)) {
     turnRight(); // rẻ phải
     Serial.println("turnright");
   }
-
+    
   else if ((digitalRead(L_S) == 1) && (digitalRead(S_S) == 1) && (digitalRead(R_S) == 1)) {
     Stop(); // stop
     Serial.println("stop");
   }
 
+  else {
+    stop();
+    Serial.println("stop");
 
 
   if (radar_distance < stop_radar_distance) // nếu khoảng cách nhỏ hơn giới hạn
